@@ -1,0 +1,42 @@
+name: Build Mod
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ZIP entpacken (falls hochgeladen)
+        run: |
+          if [ -f totemshot-source.zip ]; then unzip -o totemshot-source.zip -d .; fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.8"
+
+      - name: Mod bauen
+        run: gradle build --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: totemshot-jar
+          path: build/libs/*.jar
+
+      - name: Release mit .jar erstellen
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Totem Shot Build ${{ github.run_number }}
+          files: build/libs/*.jar
